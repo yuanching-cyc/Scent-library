@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Scent Wardrobe | 私藏香氛管家</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Noto+Serif+TC:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            linen: '#F9F8F5',
+            sand: '#F2ECE1',
+            sandstone: '#E6DFD3',
+            slatewarm: '#8A8279',
+            charcoal: '#1A1918',
+            deepcharcoal: '#11100F',
+            amberwood: '#B37D4E',
+            amberlight: '#F4ECE4',
+            sagegreen: '#5E6B5A',
+            dangerred: '#A84842',
+            cautionyellow: '#C98A2C'
+          },
+          fontFamily: {
+            serif: ['"Noto Serif TC"', 'Cinzel', 'serif'],
+            display: ['Cinzel', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #F9F8F5;
+      color: #1A1918;
+      font-family: '"Plus Jakarta Sans"', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .serif-title {
+      font-family: '"Noto Serif TC"', 'Cinzel', serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #D8D0C5;
+      border-radius: 2px;
+    }
+    .card-update-pulse {
+      animation: pulseIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes pulseIn {
+      0% { opacity: 0.6; transform: scale(0.99); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-amberwood selection:text-white">
+
+  <!-- 頂部導航 -->
+  <header class="border-b border-sandstone bg-linen/90 backdrop-blur sticky top-0 z-40 transition-all duration-300">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+      <div>
+        <span class="text-[10px] tracking-[0.3em] uppercase text-slatewarm block font-display">Private Scent Library</span>
+        <h1 class="text-xl sm:text-2xl font-semibold tracking-wide serif-title text-charcoal">Scent Wardrobe</h1>
+      </div>
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- 氣溫自動偵測 -->
+        <button id="btn-weather-detect" onclick="detectWeather()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-sandstone bg-white/70 hover:bg-sand text-xs tracking-wider transition-colors text-charcoal">
+          <span id="weather-icon">📍</span>
+          <span id="weather-text">獲取在地氣溫</span>
+        </button>
+        <!-- 歷史紀錄抽屜觸發 -->
+        <button onclick="toggleLogModal(true)" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-sandstone bg-white/70 hover:bg-sand text-xs tracking-wider transition-colors text-charcoal">
+          <span>📜</span>
+          <span class="hidden sm:inline">著香日誌</span>
+          <span id="log-count-badge" class="ml-0.5 px-1.5 py-0.2 bg-sandstone rounded-full text-[10px]">0</span>
+        </button>
+        <!-- 一鍵重設 -->
+        <button onclick="resetAllState()" class="p-1.5 rounded-full border border-sandstone hover:bg-sand text-slatewarm hover:text-charcoal transition-colors" title="重設條件">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex-1 w-full space-y-8">
+
+    <!-- 第一步：核心模式選擇 (單人 / 雙人 / 隨機) -->
+    <section class="space-y-3 bg-white/80 p-5 rounded-2xl border border-sandstone shadow-sm">
+      <div class="flex items-center justify-between border-b border-sandstone/60 pb-2.5">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-amberwood"></span>
+          <h2 class="text-xs uppercase tracking-[0.25em] font-display text-slatewarm">Mode Selection / 著香模式</h2>
+        </div>
+        <span class="text-xs text-slatewarm" id="mode-status-text">當前：單人專屬</span>
+      </div>
+      <div id="mode-buttons-container" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        <!-- 單人專屬 -->
+        <button onclick="handleModeSwitch('solo')" id="btn-mode-solo" class="p-3.5 rounded-xl border text-left transition-all duration-200 border-charcoal bg-sand/80 shadow-sm text-charcoal">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold">👤 單人專屬穿香</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/60 text-charcoal">預設</span>
+          </div>
+          <p class="text-[11px] text-slatewarm mt-1">精確匹配個人心境、剪裁與場合</p>
+        </button>
+
+        <!-- 雙人共鳴 -->
+        <button onclick="handleModeSwitch('couple')" id="btn-mode-couple" class="p-3.5 rounded-xl border text-left transition-all duration-200 border-sandstone bg-white/50 text-slatewarm hover:border-slatewarm/60 hover:text-charcoal">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold">👥 伴侶共鳴對香</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-amberwood/10 text-amberwood">雙人</span>
+          </div>
+          <p class="text-[11px] text-slatewarm mt-1">同場氣質線條互補，和諧不互斥</p>
+        </button>
+
+        <!-- 隨機靈感 -->
+        <button onclick="handleModeSwitch('random')" id="btn-mode-random" class="p-3.5 rounded-xl border text-left transition-all duration-200 border-sandstone bg-white/50 text-slatewarm hover:border-slatewarm/60 hover:text-charcoal">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold">🎲 隨機盲盒推薦</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-sandstone/60 text-slatewarm">驚喜</span>
+          </div>
+          <p class="text-[11px] text-slatewarm mt-1">破除日常選擇猶豫，靈感偶遇</p>
+        </button>
+      </div>
+    </section>
+
+    <!-- 條件篩選區 (四維條件) -->
+    <section class="space-y-6 bg-white/70 p-5 sm:p-6 rounded-2xl border border-sandstone shadow-sm">
+      <div class="flex items-center justify-between border-b border-sandstone/60 pb-3">
+        <h2 class="text-xs uppercase tracking-[0.25em] font-display text-slatewarm">Context & Wardrobe / 四維微調</h2>
+        <span class="text-xs text-slatewarm">點選即時動態推薦</span>
+      </div>
+
+      <!-- 氣溫選擇 -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-medium text-charcoal">氣溫環境 (Temperature)</span>
+          <span id="temp-indicator" class="text-slatewarm">未選擇</span>
+        </div>
+        <div id="temp-chips" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
+      </div>
+
+      <!-- 心境狀態 -->
+      <div class="space-y-2">
+        <div class="text-xs font-medium text-charcoal">身心狀態 (Inner State)</div>
+        <div id="mood-chips" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
+      </div>
+
+      <!-- 生活場合 -->
+      <div class="space-y-2">
+        <div class="text-xs font-medium text-charcoal">生活場合與場域 (Occasion & Field)</div>
+        <div id="occasion-chips" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
+      </div>
+
+      <!-- 穿搭面料 (正裝西裝無風衣) -->
+      <div class="space-y-2">
+        <div class="text-xs font-medium text-charcoal">衣著剪裁與面料 (Attire & Texture)</div>
+        <div id="attire-chips" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
+      </div>
+    </section>
+
+    <!-- 推薦展示區 (單向響應渲染) -->
+    <section id="recommendation-container" class="space-y-6">
+      <!-- 動態注入推薦結果 -->
+    </section>
+
+    <!-- 大吉嶺茶疊香抽屜快捷指南 -->
+    <section class="border border-sandstone rounded-2xl p-5 sm:p-6 bg-sand/30 space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-amberwood">◈</span>
+          <h3 class="text-base font-semibold serif-title text-charcoal">大吉嶺茶打底疊香抽屜 (Darjeeling Dock)</h3>
+        </div>
+        <span class="text-xs text-slatewarm">高智白襯衫純透濾鏡</span>
+      </div>
+      <p class="text-xs text-slatewarm leading-relaxed">
+        大吉嶺茶（Bvlgari Pour Homme）具備最高透明度的睡蓮水氣與微苦茶香，是全庫唯一的「百搭打底白襯衫」。可隨時為以下主力增添柔和貼膚層次：
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+        <div class="p-3 bg-white/80 rounded-xl border border-sandstone">
+          <span class="font-medium text-charcoal block mb-1">＋ Aesop 馥綻</span>
+          <span class="text-slatewarm block leading-relaxed">晨霧拂過帶刺玫瑰，柔化癒創木沉肅感。</span>
+          <span class="text-[10px] text-amberwood mt-1.5 block">著裝前胸口 2 下 ＋ 外著手腕 1 下</span>
+        </div>
+        <div class="p-3 bg-white/80 rounded-xl border border-sandstone">
+          <span class="font-medium text-charcoal block mb-1">＋ Byredo 北國之春</span>
+          <span class="text-slatewarm block leading-relaxed">乾冷削鉛筆雪松獲得茶霧滋潤，雙重白襯衫。</span>
+          <span class="text-[10px] text-amberwood mt-1.5 block">1:1 分區噴灑，胸口與手腕</span>
+        </div>
+        <div class="p-3 bg-white/80 rounded-xl border border-sandstone">
+          <span class="font-medium text-charcoal block mb-1">＋ Aesop 悟</span>
+          <span class="text-slatewarm block leading-relaxed">高山清晨茶園，麝香底溫柔鎖住脆甜柚皮。</span>
+          <span class="text-[10px] text-amberwood mt-1.5 block">大吉嶺 2 下打底 ＋ 悟 1 下提亮</span>
+        </div>
+        <div class="p-3 bg-white/80 rounded-xl border border-sandstone">
+          <span class="font-medium text-charcoal block mb-1">＋ Perfumer H Steam</span>
+          <span class="text-slatewarm block leading-relaxed">極致水墨留白，水蒸氣瑪黛茶與溫潤貼膚。</span>
+          <span class="text-[10px] text-amberwood mt-1.5 block">貼膚大吉嶺 ＋ 外衣雲霧 Steam</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 全庫 19 款精選典藏檢索 -->
+    <section class="space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-sandstone pb-3">
+        <div>
+          <h2 class="text-xs uppercase tracking-[0.25em] font-display text-slatewarm">Compendium / 私藏全集</h2>
+          <span class="text-base font-semibold serif-title text-charcoal">全庫 19 款精選香氛典藏</span>
+        </div>
+        <!-- 品牌快速篩選 -->
+        <div id="brand-filters" class="flex flex-wrap gap-1.5 text-xs"></div>
+      </div>
+      <div id="perfume-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+  </main>
+
+  <!-- 頁腳 -->
+  <footer class="border-t border-sandstone py-8 text-center text-xs text-slatewarm bg-linen mt-12">
+    <div class="max-w-5xl mx-auto px-4 space-y-2">
+      <p class="font-display tracking-[0.2em] uppercase text-charcoal">High-IQ Minimalist Scent Archive</p>
+      <p class="text-[11px]">本系統收錄 19 款精選無重複香氛 ‧ 內建貓咪精油防護守門機制 ‧ 雙人獨立對香共鳴演算</p>
+    </div>
+  </footer>
+
+  <!-- 著香歷史日誌 Modal -->
+  <div id="log-modal" class="fixed inset-0 bg-charcoal/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-linen max-w-lg w-full rounded-2xl border border-sandstone shadow-2xl p-6 space-y-5">
+      <div class="flex items-center justify-between border-b border-sandstone pb-3">
+        <div>
+          <h3 class="text-base font-semibold serif-title text-charcoal">著香歷史日誌</h3>
+          <span class="text-xs text-slatewarm">記錄每一次嗅覺陪伴與出場頻率</span>
+        </div>
+        <button onclick="toggleLogModal(false)" class="text-slatewarm hover:text-charcoal p-1">✕</button>
+      </div>
+      <div id="log-list" class="space-y-2.5 max-h-80 overflow-y-auto custom-scrollbar pr-1 text-xs">
+        <!-- 動態渲染日誌項目 -->
+      </div>
+      <div class="flex items-center justify-between pt-2 border-t border-sandstone">
+        <button onclick="clearScentLogs()" class="text-xs text-dangerred hover:underline">清空所有紀錄</button>
+        <button onclick="toggleLogModal(false)" class="px-4 py-1.5 bg-charcoal text-white rounded-lg text-xs">完成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript 核心狀態機與演算法 -->
+  <script>
+    // 19 款完整香水庫資料結構
+    const PERFUMES = [
+      {
+        id: "aesop-rozu-arises",
+        name: "Aesop 馥綻",
+        enName: "Rōzu Arises",
+        brand: "Aesop",
+        category: "高智深邃荊棘古木玫瑰",
+        notes: "紫蘇金屬冷感、波旁岩蘭草、癒創木、沒藥",
+        tags: ["cold", "mild", "weary", "deep", "meeting", "date", "art", "suit", "partner-sync"],
+        catSafety: "medium",
+        catHazard: "紫蘇酚類、微量沒藥與深層木質萃取",
+        isCoupleShared: true,
+        desc: "不分性別的高智堅韌木質玫瑰，一人一瓶的默契共鳴。冷冽紫蘇與癒創木骨架，給予不可撼動的自律氣場。",
+        canLayer: true,
+        layerRecipe: "【與大吉嶺茶疊香】大吉嶺茶胸口貼身打底 2 下 ＋ 馥綻手腕輕按 1 下。水氣茶霧如同晨露拂過帶刺玫瑰，柔化沉肅感。"
+      },
+      {
+        id: "aesop-hwyl",
+        name: "Aesop 熾",
+        enName: "Hwyl",
+        brand: "Aesop",
+        category: "深山古日本扁柏肅穆古木",
+        notes: "日本扁柏 (Hinoki)、煙燻乳香、青苔古木",
+        tags: ["cold", "weary", "deep", "outdoor", "knit", "alone"],
+        catSafety: "high",
+        catHazard: "高濃度日本扁柏 (Hinoki) 雙萜與針葉樹精油，貓咪肝臟代謝極重",
+        isCoupleShared: false,
+        desc: "如千年古寺的靜謐結界，完全無甜味的煙燻扁柏與青苔，深邃避世之巔。",
+        canLayer: false,
+        standAloneReason: "骨架極重且含神聖煙燻乳香，任何清淡水生茶香皆會被直接吞噬，破壞幽玄深度。"
+      },
+      {
+        id: "aesop-tacit",
+        name: "Aesop 悟",
+        enName: "Tacit",
+        brand: "Aesop",
+        category: "手捏柚皮俐落草本",
+        notes: "日本柚子 (Yuzu)、生脆羅勒、海地香根草",
+        tags: ["warm", "hot", "refresh", "work", "walk", "shirt", "casual"],
+        catSafety: "high",
+        catHazard: "柑橘單萜烯（檸檬烯 D-Limonene）＋ 羅勒精油酚類，屬貓咪高危毒物榜首",
+        isCoupleShared: false,
+        desc: "瞬間破除混沌的高穿透力綠意，剛摘下的青脆羅勒與微苦柚皮，開機提神首選。",
+        canLayer: true,
+        layerRecipe: "【與大吉嶺茶疊香】大吉嶺茶 2 下胸口打底 ＋ 悟 1 下於領口。溫潤白麝香鎖住飛濺的柚皮與生脆羅勒，彷若晨霧茶園。"
+      },
+      {
+        id: "aesop-virere",
+        name: "Aesop 蔚",
+        enName: "Virēre",
+        brand: "Aesop",
+        category: "鮮活生青大自然無花果茶",
+        notes: "白松香折枝、無花果樹下微風、冷綠茶",
+        tags: ["warm", "hot", "refresh", "light", "walk", "outdoor", "casual", "shirt"],
+        catSafety: "high",
+        catHazard: "高純度未稀釋白松香 (Galbanum) 與植物揮發性生青分子",
+        isCoupleShared: false,
+        desc: "純粹大自然的破土生機，毫無奶甜感，只有植物汁液與冷綠茶的洗練微風。",
+        canLayer: true,
+        layerRecipe: "【與大吉嶺茶疊香】大吉嶺茶 2 下 ＋ 蔚 1 下於手腕輕點。雙重清冷茶骨交融，延展綠意通透度。"
+      },
+      {
+        id: "aesop-steorra",
+        name: "Aesop 引",
+        enName: "Above Us, Steorra",
+        brand: "Aesop",
+        category: "神聖乳香樹脂與星空厚度",
+        notes: "阿曼神聖乳香、勞丹脂、小豆蔻、琥珀木",
+        tags: ["cold", "mild", "deep", "meeting", "art", "suit", "knit"],
+        catSafety: "medium",
+        catHazard: "乳香與小豆蔻辛香料樹脂酚類，代謝速度偏慢",
+        isCoupleShared: false,
+        desc: "星空下的沉思與精神厚度，溫暖微潤的珍稀樹脂與深邃乳香，充滿安定的哲學感。",
+        canLayer: false,
+        standAloneReason: "厚實的勞丹脂與乳香樹脂具有強烈的東方精神氣場，單穿方能體會星空般的完整層次。"
+      },
+      {
+        id: "aesop-aer",
+        name: "Aesop 喚空",
+        enName: "Unforeseen, Aer",
+        brand: "Aesop",
+        category: "純透空氣感與高空冷風",
+        notes: "高空冷冽流動感、草本微風、極致留白",
+        tags: ["hot", "warm", "mild", "zero", "art", "alone", "shirt", "casual"],
+        catSafety: "medium",
+        catHazard: "微量草本揮發分子，室內噴灑需維持良好通風",
+        isCoupleShared: false,
+        desc: "極簡留白的呼吸感，彷彿站在高空稜線上的清冷風流，為大腦釋放清空空間。",
+        canLayer: true,
+        layerRecipe: "【與大吉嶺茶疊香】大吉嶺茶貼身 2 下 ＋ 喚空大面積噴在空氣中步入穿香。營造零重力水墨茶霧。"
+      },
+      {
+        id: "byredo-super-cedar",
+        name: "Byredo 北國之春",
+        enName: "Super Cedar",
+        brand: "Byredo",
+        category: "俐落挺拔冷雪松白襯衫",
+        notes: "乾燥維吉尼亞雪松、削鉛筆木屑、絲絨玫瑰、麝香",
+        tags: ["mild", "cold", "sharp", "meeting", "work", "suit", "shirt"],
+        catSafety: "medium",
+        catHazard: "高比例雪松醇 (Cedrol)，對貓咪嗅覺具一定刺激性",
+        isCoupleShared: false,
+        desc: "極致乾燥、線條剛挺的冷冽雪松，沒有一絲粉甜雜質，如同熨燙得極致平整的冷杉白襯衫。",
+        canLayer: true,
+        layerRecipe: "【與大吉嶺茶疊香】大吉嶺茶 2 下 ＋ 北國之春 1 下。削鉛筆雪松獲得茶水滋潤，打造天花板級純淨體香。"
+      },
+      {
+        id: "byredo-rose-no-mans-land",
+        name: "Byredo 無人之境",
+        enName: "Rose of No Man's Land",
+        brand: "Byredo",
+        category: "冷冽俐落紙莎草辛香玫瑰",
+        notes: "粉紅胡椒、土耳其玫瑰、乾淨紙莎草、白琥珀",
+        tags: ["mild", "warm", "sharp", "deep", "meeting", "work", "partner-sync", "suit", "shirt"],
+        catSafety: "safe",
+        catHazard: "主要為合成胡椒與乾淨玫瑰單體，對貓咪刺激性低（仍不可舔舐）",
+        isCoupleShared: true,
+        desc: "自律疏離、帶有消毒水般清冽感的高智玫瑰。與《馥綻》形成一深一透的雙璧組合。",
+        canLayer: true,
+        layerRecipe: "【與大吉嶺茶疊香】大吉嶺茶貼身 2 下 ＋ 無人之境袖口 1 下。柔和微苦茶香撫平胡椒辛刺，增添知性溫度。"
+      },
+      {
+        id: "byredo-de-los-santos",
+        name: "Byredo 初生如沸 (00:00)",
+        enName: "De Los Santos",
+        brand: "Byredo",
+        category: "乾燥鼠尾草與煙燻大地",
+        notes: "清涼鼠尾草、黃香李 (Mirabelle)、鳶尾根、廣藿香",
+        tags: ["cold", "mild", "weary", "deep", "art", "alone", "knit", "partner-sync"],
+        catSafety: "medium",
+        catHazard: "鼠尾草含有微量側柏酮 (Thujone)，需避免貓咪直接接觸",
+        isCoupleShared: true,
+        desc: "以乾燥大地與焚燒草本為靈感的儀式感神作。清涼微苦與李子酸氣，在安靜夜晚極具防禦力量。",
+        canLayer: false,
+        standAloneReason: "乾燥草本煙燻與微酸李子的香氣結構極其特殊，疊加水生茶香會破壞原有的土壤乾爽感。"
+      },
+      {
+        id: "byredo-mojave-ghost",
+        name: "Byredo 莫哈維之影",
+        enName: "Mojave Ghost",
+        brand: "Byredo",
+        category: "荒漠微光半透明果木",
+        notes: "黃葵籽、人參果 (Sapodilla)、紫羅蘭、雪松",
+        tags: ["warm", "mild", "light", "date", "shopping", "casual", "partner-sync"],
+        catSafety: "safe",
+        catHazard: "合成麝香與花木單體，毒性風險低",
+        isCoupleShared: true,
+        desc: "荒漠中若即若離的空靈微光。半透明的清雅果香被紫羅蘭與雪松拉回極其乾淨的木質底色。",
+        canLayer: true,
+        layerRecipe: "【與大吉嶺茶疊香】大吉嶺茶 2 下打底 ＋ 莫哈維之影 1 下。讓空靈果木增添一份溫潤茶氣，更顯沉靜。"
+      },
+      {
+        id: "byredo-blanche-absolu",
+        name: "Byredo 返璞歸真 典藏版",
+        enName: "Blanche Absolu",
+        brand: "Byredo",
+        category: "日曬純白亞麻織物白襯衫",
+        notes: "白玫瑰、微亮醛香、橙花、檀香木、金色木質",
+        tags: ["warm", "mild", "hot", "refresh", "work", "alone", "shirt", "casual", "partner-sync"],
+        catSafety: "safe",
+        catHazard: "醛香與合成乾淨皂感基底，對貓咪友好度相對較高",
+        isCoupleShared: true,
+        desc: "陽光下剛烘曬完的純白亞麻布料。典藏版加厚了木質基底，無甜味、極致純粹的潔淨感。",
+        canLayer: true,
+        layerRecipe: "【與大吉嶺茶疊香】大吉嶺茶 1 下 ＋ Blanche 1 下。雙重乾淨體香重疊，宛如剛剛沐浴完穿上陽光白襯衫。"
+      },
+      {
+        id: "diptyque-eau-rose-edp",
+        name: "Diptyque 玫瑰之水淡香精",
+        enName: "Eau Rose EDP",
+        brand: "Diptyque",
+        category: "鮮採綠露洋甘菊木質玫瑰",
+        notes: "大馬士革玫瑰、洋薊脆綠、洋甘菊、雪松",
+        tags: ["mild", "warm", "light", "date", "shopping", "casual", "shirt"],
+        catSafety: "safe",
+        catHazard: "合成花香與天然洋甘菊萃取，注意避免貓咪舔舐噴香處",
+        isCoupleShared: false,
+        desc: "帶著綠意露水與微脆洋薊的鮮活玫瑰，毫無甜膩，純粹自然的晨間花植生機。",
+        canLayer: true,
+        layerRecipe: "【與大吉嶺茶疊香】大吉嶺茶 2 下 ＋ 玫瑰之水 1 下。睡蓮茶水與清晨露水交織，花香更加空靈出塵。"
+      },
+      {
+        id: "diptyque-ilio",
+        name: "Diptyque 暖陽",
+        enName: "ILIO",
+        brand: "Diptyque",
+        category: "地中海陽光仙人掌微風",
+        notes: "仙人掌果、佛手柑、鳶尾花、茉莉",
+        tags: ["hot", "warm", "light", "refresh", "walk", "casual"],
+        catSafety: "safe",
+        catHazard: "合成果木單體與輕量佛手柑，避開剛噴時的酒精與揮發期即可",
+        isCoupleShared: false,
+        desc: "地中海夏日的愜意陽光，仙人掌果的清潤水感與鳶尾的細膩微風，高溫夏日無負擔輕盈首選。",
+        canLayer: true,
+        layerRecipe: "【與大吉嶺茶疊香】大吉嶺茶 2 下 ＋ ILIO 1 下。微苦茶葉平衡仙人掌果汁水感，營造夏日林蔭茶席。"
+      },
+      {
+        id: "diptyque-eau-des-sens",
+        name: "Diptyque 感官之水",
+        enName: "Eau des Sens",
+        brand: "Diptyque",
+        category: "苦橙枝葉與穿透白皂感",
+        notes: "苦橙樹枝葉、橙花、杜松子、廣藿香",
+        tags: ["warm", "hot", "refresh", "work", "walk", "shirt", "suit"],
+        catSafety: "high",
+        catHazard: "苦橙葉高含量沉香醇 (Linalool) 與杜松子單萜烯，具高呼吸道刺激性",
+        isCoupleShared: false,
+        desc: "從枝葉、花瓣到樹幹的整棵苦橙樹。極度乾淨且穿透力驚人的白肥皂感，洗練自律。",
+        canLayer: false,
+        standAloneReason: "苦橙葉與杜松子的穿透力已臻頂峰，疊擦容易互相干擾破壞純淨的皂香直線條。"
+      },
+      {
+        id: "diptyque-vetyverio",
+        name: "Diptyque 維提里歐",
+        enName: "Vetyverio",
+        brand: "Diptyque",
+        category: "洗練明亮柑橘岩蘭草",
+        notes: "義大利佛手柑、葡萄柚、海地岩蘭草、雪松",
+        tags: ["mild", "warm", "sharp", "work", "meeting", "shirt", "suit"],
+        catSafety: "medium",
+        catHazard: "前調柑橘果皮精油含檸檬烯，建議玄關噴灑完畢再出門",
+        isCoupleShared: false,
+        desc: "擺脫土腥味、處理得極為乾淨明亮的都會岩蘭草。柑橘明亮感與乾燥木質達到完美平衡。",
+        canLayer: true,
+        layerRecipe: "【與大吉嶺茶疊香】大吉嶺茶 2 下 ＋ 維提里歐 1 下。茶葉微苦與岩蘭草根系融合，呈現高級紳士知性。"
+      },
+      {
+        id: "perfumer-h-steam",
+        name: "Perfumer H 氤氳",
+        enName: "Steam",
+        brand: "Perfumer H",
+        category: "文人水蒸氣茶霧天花板",
+        notes: "水蒸氣瑪黛茶、白芷、冷杉、濕潤雪松",
+        tags: ["mild", "warm", "zero", "art", "alone", "meeting", "shirt"],
+        catSafety: "medium",
+        catHazard: "天然草本蒸餾物，請在通風良好處著香",
+        isCoupleShared: false,
+        desc: "將「水氣、留白與茶」演繹得最空靈的沙龍天花板。如同一幅文人水墨畫中的輕煙薄霧。",
+        canLayer: true,
+        layerRecipe: "【與大吉嶺茶疊香】大吉嶺茶貼身 2 下 ＋ Steam 噴灑於外衣。極致文人雙茶疊合，出塵絕倫。"
+      },
+      {
+        id: "labruket-335",
+        name: "L:a Bruket 335 晨曦之舞",
+        enName: "335 Morgenbris",
+        brand: "L:a Bruket",
+        category: "北歐晨露白光鳶尾貼膚",
+        notes: "北歐晨光、露水鳶尾、乾淨麝香",
+        tags: ["mild", "warm", "zero", "light", "alone", "casual", "shirt"],
+        catSafety: "safe",
+        catHazard: "北歐純淨合成貼膚基底，對貓咪低敏溫和",
+        isCoupleShared: false,
+        desc: "北歐早晨森林灑落的第一道白光，清透無垢的晨露鳶尾，宛如純淨體香的微光。",
+        canLayer: true,
+        layerRecipe: "【與大吉嶺茶疊香】大吉嶺茶 1 下 ＋ 335 1 下。雙倍純淨貼膚感，如同天生體香。"
+      },
+      {
+        id: "labruket-333",
+        name: "L:a Bruket 333",
+        enName: "333",
+        brand: "L:a Bruket",
+        category: "北歐原生森林純淨氛圍",
+        notes: "北歐原生針葉林、冷杉、大地植物",
+        tags: ["cold", "mild", "deep", "outdoor", "alone", "knit"],
+        catSafety: "medium",
+        catHazard: "微量針葉植物萃取，外出前著香即可",
+        isCoupleShared: false,
+        desc: "未經雕琢的北歐原生林地氣息，微涼純淨，遠離世俗塵囂。",
+        canLayer: true,
+        layerRecipe: "【與大吉嶺茶疊香】大吉嶺茶 2 下 ＋ 333 1 下。為原生冷杉木注入一抹溫柔茶水底蘊。"
+      },
+      {
+        id: "tf-oud-wood",
+        name: "Tom Ford 珍華烏木",
+        enName: "Oud Wood",
+        brand: "Tom Ford",
+        category: "小豆蔻花梨木克制沉香",
+        notes: "小豆蔻、花梨木、四川花椒、烏木、檀木、香草",
+        tags: ["cold", "mild", "sharp", "deep", "meeting", "suit", "knit"],
+        catSafety: "safe",
+        catHazard: "主要為深沉合成木質與小豆蔻單體，無高揮發性柑橘萜烯",
+        isCoupleShared: false,
+        desc: "被馴化得極為溫文爾雅的珍稀烏木。克制沉穩的小豆蔻與花梨木，正裝主場不可動搖的自信底氣。",
+        canLayer: false,
+        standAloneReason: "烏木與花梨木具有極強的自身骨架與密實度，疊加清淡茶水會顯得混濁，必須獨立單穿。"
+      },
+      {
+        id: "bvlgari-pour-homme",
+        name: "Bvlgari 大吉嶺茶",
+        enName: "Pour Homme",
+        brand: "Bvlgari",
+        category: "初心貼膚體香白襯衫 (百搭底色)",
+        notes: "大吉嶺茶、睡蓮水氣、黑加侖花、純淨白麝香",
+        tags: ["mild", "warm", "hot", "zero", "refresh", "work", "alone", "shirt", "casual"],
+        catSafety: "safe",
+        catHazard: "極微量合成茶香單體與安全白麝香，全庫對貓咪最溫和款",
+        isCoupleShared: false,
+        desc: "全庫唯一的百搭白襯衫打底香。睡蓮水生茶香與溫暖白麝香，既是睡前放鬆儀式，也是疊香濾鏡王牌。",
+        canLayer: true,
+        layerRecipe: "【百搭基底】可作為全庫所有非厚重木質的打底香，永遠提供柔和水生茶霧緩衝。"
+      }
+    ];
+
+    // 選項定義資料
+    const OPTIONS_CONFIG = {
+      temp: [
+        { id: "cold", label: "寒冷低溫", sub: "< 18°C 需深邃沉靜", tempVal: 16 },
+        { id: "mild", label: "舒適涼爽", sub: "18 - 25°C 游刃有餘", tempVal: 22 },
+        { id: "warm", label: "溫暖微熱", sub: "25 - 30°C 輕盈純透", tempVal: 27 },
+        { id: "hot", label: "炎熱酷暑", sub: "> 30°C 需破除悶濁", tempVal: 32 }
+      ],
+      mood: [
+        { id: "sharp", label: "專注自律 / 高智思維", sub: "線條挺拔 邊界明確" },
+        { id: "deep", label: "沉靜收斂 / 儀式沉思", sub: "深邃安穩 精神厚度" },
+        { id: "weary", label: "厭世 / 想避世防禦結界", sub: "帶刺荊棘 不受侵犯" },
+        { id: "refresh", label: "沒精神 / 需要提振開機", sub: "鮮活生青 破土甦醒" },
+        { id: "light", label: "輕盈愜意 / 舒展微風", sub: "明亮通透 毫無負擔" },
+        { id: "zero", label: "放空歸零 / 極簡留白", sub: "純淨呼吸 水墨出塵" }
+      ],
+      occasion: [
+        { id: "meeting", label: "關鍵會議 / 核心主場", sub: "專業自信 鎮定全場" },
+        { id: "work", label: "一般辦公 / 日常通勤", sub: "親和自律 得體不擾" },
+        { id: "date", label: "伴侶共處 / 親密漫步", sub: "雙人共鳴 溫柔留白" },
+        { id: "art", label: "藝廊看展 / 戲劇沉浸", sub: "文人審美 精神對話" },
+        { id: "shopping", label: "市集漫遊 / 選品探店", sub: "輕鬆優雅 靈動隨行" },
+        { id: "walk", label: "城市林蔭 / 靜心散步", sub: "融入微風 舒暢呼吸" },
+        { id: "outdoor", label: "登山野營 / 山岳浸潤", sub: "古木原生 自然無界" },
+        { id: "alone", label: "居家放鬆 / 獨處空白", sub: "睡前儀式 貼膚安心" }
+      ],
+      attire: [
+        { id: "suit", label: "正裝西裝 / 俐落剪裁", sub: "挺拔自律 骨架分明" },
+        { id: "shirt", label: "挺拔白襯衫 / 俐落常服", sub: "乾淨冷冽 專業線條" },
+        { id: "knit", label: "質純針織 / 深色羊毛", sub: "溫潤厚度 柔軟包覆" },
+        { id: "casual", label: "極簡休閒 / 亞麻棉麻", sub: "輕盈舒適 呼吸自在" }
+      ]
+    };
+
+    // 全局狀態機
+    let state = {
+      mode: 'solo', // 'solo' | 'couple' | 'random'
+      selected: {
+        temp: null,
+        mood: null,
+        occasion: null,
+        attire: null
+      },
+      activeBrandFilter: 'all',
+      logs: JSON.parse(localStorage.getItem('scent_wardrobe_logs') || '[]')
+    };
+
+    // 初始化程式
+    window.addEventListener('DOMContentLoaded', () => {
+      renderModeButtons();
+      renderOptionChips();
+      renderBrandFilters();
+      updateRecommendation();
+      renderCompendium();
+      updateLogBadge();
+    });
+
+    // 模式切換邏輯 (單人 / 雙人 / 隨機)
+    function handleModeSwitch(newMode) {
+      state.mode = newMode;
+      renderModeButtons();
+
+      if (newMode === 'random') {
+        // 隨機選取四維條件
+        const tempKeys = OPTIONS_CONFIG.temp.map(o => o.id);
+        const moodKeys = OPTIONS_CONFIG.mood.map(o => o.id);
+        const occasionKeys = OPTIONS_CONFIG.occasion.map(o => o.id);
+        const attireKeys = OPTIONS_CONFIG.attire.map(o => o.id);
+
+        state.selected.temp = tempKeys[Math.floor(Math.random() * tempKeys.length)];
+        state.selected.mood = moodKeys[Math.floor(Math.random() * moodKeys.length)];
+        state.selected.occasion = occasionKeys[Math.floor(Math.random() * occasionKeys.length)];
+        state.selected.attire = attireKeys[Math.floor(Math.random() * attireKeys.length)];
+        renderOptionChips();
+      }
+
+      updateRecommendation();
+      document.getElementById('recommendation-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function renderModeButtons() {
+      const btnSolo = document.getElementById('btn-mode-solo');
+      const btnCouple = document.getElementById('btn-mode-couple');
+      const btnRandom = document.getElementById('btn-mode-random');
+      const statusText = document.getElementById('mode-status-text');
+
+      const activeClass = 'border-charcoal bg-sand/80 shadow-sm text-charcoal';
+      const inactiveClass = 'border-sandstone bg-white/50 text-slatewarm hover:border-slatewarm/60 hover:text-charcoal';
+
+      // Reset
+      btnSolo.className = `p-3.5 rounded-xl border text-left transition-all duration-200 ${state.mode === 'solo' ? activeClass : inactiveClass}`;
+      btnCouple.className = `p-3.5 rounded-xl border text-left transition-all duration-200 ${state.mode === 'couple' ? activeClass : inactiveClass}`;
+      btnRandom.className = `p-3.5 rounded-xl border text-left transition-all duration-200 ${state.mode === 'random' ? activeClass : inactiveClass}`;
+
+      if (state.mode === 'solo') statusText.textContent = '當前：單人專屬穿香';
+      else if (state.mode === 'couple') statusText.textContent = '當前：雙人共鳴對香';
+      else statusText.textContent = '當前：隨機盲盒靈感';
+    }
+
+    // 渲染四維選項 Chips
+    function renderOptionChips() {
+      // 氣溫
+      const tempContainer = document.getElementById('temp-chips');
+      tempContainer.innerHTML = OPTIONS_CONFIG.temp.map(item => `
+        <button onclick="handleOptionSelect('temp', '${item.id}')" 
+          class="p-2.5 rounded-xl border text-left transition-all duration-200 ${
+            state.selected.temp === item.id 
+              ? 'border-charcoal bg-sand/80 shadow-sm text-charcoal' 
+              : 'border-sandstone bg-white/50 text-slatewarm hover:border-slatewarm/60 hover:text-charcoal'
+          }">
+          <div class="text-xs font-medium">${item.label}</div>
+          <div class="text-[10px] text-slatewarm mt-0.5">${item.sub}</div>
+        </button>
+      `).join('');
+
+      // 心境
+      const moodContainer = document.getElementById('mood-chips');
+      moodContainer.innerHTML = OPTIONS_CONFIG.mood.map(item => `
+        <button onclick="handleOptionSelect('mood', '${item.id}')" 
+          class="p-2.5 rounded-xl border text-left transition-all duration-200 ${
+            state.selected.mood === item.id 
+              ? 'border-charcoal bg-sand/80 shadow-sm text-charcoal' 
+              : 'border-sandstone bg-white/50 text-slatewarm hover:border-slatewarm/60 hover:text-charcoal'
+          }">
+          <div class="text-xs font-medium">${item.label}</div>
+          <div class="text-[10px] text-slatewarm mt-0.5">${item.sub}</div>
+        </button>
+      `).join('');
+
+      // 場合
+      const occasionContainer = document.getElementById('occasion-chips');
+      occasionContainer.innerHTML = OPTIONS_CONFIG.occasion.map(item => `
+        <button onclick="handleOptionSelect('occasion', '${item.id}')" 
+          class="p-2.5 rounded-xl border text-left transition-all duration-200 ${
+            state.selected.occasion === item.id 
+              ? 'border-charcoal bg-sand/80 shadow-sm text-charcoal' 
+              : 'border-sandstone bg-white/50 text-slatewarm hover:border-slatewarm/60 hover:text-charcoal'
+          }">
+          <div class="text-xs font-medium">${item.label}</div>
+          <div class="text-[10px] text-slatewarm mt-0.5">${item.sub}</div>
+        </button>
+      `).join('');
+
+      // 衣著
+      const attireContainer = document.getElementById('attire-chips');
+      attireContainer.innerHTML = OPTIONS_CONFIG.attire.map(item => `
+        <button onclick="handleOptionSelect('attire', '${item.id}')" 
+          class="p-2.5 rounded-xl border text-left transition-all duration-200 ${
+            state.selected.attire === item.id 
+              ? 'border-charcoal bg-sand/80 shadow-sm text-charcoal' 
+              : 'border-sandstone bg-white/50 text-slatewarm hover:border-slatewarm/60 hover:text-charcoal'
+          }">
+          <div class="text-xs font-medium">${item.label}</div>
+          <div class="text-[10px] text-slatewarm mt-0.5">${item.sub}</div>
+        </button>
+      `).join('');
+    }
+
+    // 選項切換
+    function handleOptionSelect(category, val) {
+      state.selected[category] = val;
+      if (state.mode === 'random') {
+        state.mode = 'solo'; // 手動調整後平滑回歸單人調整
+        renderModeButtons();
+      }
+      renderOptionChips();
+      updateRecommendation();
+    }
+
+    // 重設狀態
+    function resetAllState() {
+      state.mode = 'solo';
+      state.selected = {
+        temp: null,
+        mood: null,
+        occasion: null,
+        attire: null
+      };
+      document.getElementById('temp-indicator').textContent = '未選擇';
+      renderModeButtons();
+      renderOptionChips();
+      updateRecommendation();
+    }
+
+    // 在地氣溫自動偵測
+    function detectWeather() {
+      const textElem = document.getElementById('weather-text');
+      const iconElem = document.getElementById('weather-icon');
+
+      textElem.textContent = '正在定位...';
+      iconElem.textContent = '⏳';
+
+      if (!navigator.geolocation) {
+        fallbackWeather('瀏覽器不支援定位');
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            textElem.textContent = '獲取氣溫中...';
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+            const data = await res.json();
+            if (data && data.current_weather) {
+              const currentTemp = Math.round(data.current_weather.temperature);
+              applyDetectTemperature(currentTemp, '在地實溫');
+            } else {
+              fallbackWeather('氣象伺服器逾時');
+            }
+          } catch (e) {
+            fallbackWeather('讀取失敗');
+          }
+        },
+        () => {
+          fallbackWeather('未獲取位置權限');
+        },
+        { timeout: 7000 }
+      );
+    }
+
+    function applyDetectTemperature(tempC, label) {
+      document.getElementById('weather-text').textContent = `${tempC}°C 在地實溫`;
+      document.getElementById('weather-icon').textContent = '🌤️';
+      document.getElementById('temp-indicator').textContent = `${label}: ${tempC}°C`;
+
+      if (tempC < 18) state.selected.temp = 'cold';
+      else if (tempC <= 24) state.selected.temp = 'mild';
+      else if (tempC <= 29) state.selected.temp = 'warm';
+      else state.selected.temp = 'hot';
+
+      renderOptionChips();
+      updateRecommendation();
+    }
+
+    function fallbackWeather(msg) {
+      applyDetectTemperature(23, '推估氣候');
+      setTimeout(() => {
+        document.getElementById('weather-text').textContent = `23°C (${msg})`;
+      }, 1500);
+    }
+
+    // 靈敏動態推薦運算矩陣
+    function calculateBestScent() {
+      const { temp, mood, occasion, attire } = state.selected;
+      const lastWornId = state.logs.length > 0 ? state.logs[0].id : null;
+
+      const occasionChampions = {
+        meeting: { 'tf-oud-wood': 60, 'byredo-super-cedar': 50, 'aesop-rozu-arises': 45, 'byredo-rose-no-mans-land': 40 },
+        work: { 'byredo-super-cedar': 55, 'diptyque-vetyverio': 50, 'aesop-tacit': 45, 'bvlgari-pour-homme': 40, 'byredo-blanche-absolu': 40 },
+        date: { 'byredo-mojave-ghost': 60, 'diptyque-eau-rose-edp': 55, 'aesop-rozu-arises': 50, 'byredo-rose-no-mans-land': 45 },
+        art: { 'perfumer-h-steam': 65, 'byredo-de-los-santos': 55, 'aesop-steorra': 50, 'aesop-aer': 45 },
+        shopping: { 'byredo-mojave-ghost': 55, 'diptyque-eau-rose-edp': 50, 'diptyque-ilio': 45, 'labruket-335': 40 },
+        walk: { 'aesop-virere': 60, 'aesop-tacit': 55, 'diptyque-ilio': 50, 'diptyque-eau-des-sens': 45 },
+        outdoor: { 'aesop-hwyl': 65, 'labruket-333': 60, 'aesop-virere': 50 },
+        alone: { 'bvlgari-pour-homme': 65, 'labruket-335': 55, 'aesop-aer': 50, 'byredo-de-los-santos': 45 }
+      };
+
+      const moodChampions = {
+        sharp: { 'byredo-super-cedar': 55, 'byredo-rose-no-mans-land': 50, 'tf-oud-wood': 45, 'diptyque-vetyverio': 45 },
+        deep: { 'aesop-hwyl': 60, 'aesop-steorra': 55, 'tf-oud-wood': 50, 'aesop-rozu-arises': 45 },
+        weary: { 'aesop-rozu-arises': 65, 'aesop-hwyl': 60, 'byredo-de-los-santos': 55 },
+        refresh: { 'aesop-tacit': 65, 'diptyque-eau-des-sens': 60, 'aesop-virere': 55 },
+        light: { 'diptyque-ilio': 60, 'labruket-335': 55, 'byredo-mojave-ghost': 50, 'diptyque-eau-rose-edp': 45 },
+        zero: { 'perfumer-h-steam': 65, 'aesop-aer': 60, 'byredo-blanche-absolu': 55, 'bvlgari-pour-homme': 50 }
+      };
+
+      const attireChampions = {
+        suit: { 'tf-oud-wood': 40, 'byredo-super-cedar': 35, 'aesop-rozu-arises': 30, 'diptyque-vetyverio': 25 },
+        shirt: { 'byredo-super-cedar': 40, 'byredo-blanche-absolu': 35, 'aesop-tacit': 30, 'perfumer-h-steam': 30 },
+        knit: { 'aesop-hwyl': 40, 'aesop-steorra': 35, 'tf-oud-wood': 30, 'byredo-de-los-santos': 30 },
+        casual: { 'diptyque-ilio': 40, 'aesop-virere': 35, 'byredo-mojave-ghost': 30, 'labruket-335': 30 }
+      };
+
+      const tempModifiers = {
+        hot: { 'diptyque-ilio': 40, 'aesop-aer': 35, 'aesop-tacit': 30, 'aesop-virere': 30, 'aesop-hwyl': -60, 'tf-oud-wood': -60, 'aesop-steorra': -50 },
+        warm: { 'diptyque-ilio': 25, 'aesop-virere': 20, 'byredo-mojave-ghost': 20, 'aesop-hwyl': -30, 'tf-oud-wood': -30 },
+        mild: { 'byredo-super-cedar': 20, 'aesop-rozu-arises': 20, 'perfumer-h-steam': 20 },
+        cold: { 'aesop-hwyl': 40, 'tf-oud-wood': 35, 'aesop-steorra': 35, 'aesop-rozu-arises': 25, 'diptyque-ilio': -40, 'aesop-aer': -30 }
+      };
+
+      let ranked = PERFUMES.map(p => {
+        let score = 0;
+        if (occasionChampions[occasion] && occasionChampions[occasion][p.id]) score += occasionChampions[occasion][p.id];
+        if (moodChampions[mood] && moodChampions[mood][p.id]) score += moodChampions[mood][p.id];
+        if (attireChampions[attire] && attireChampions[attire][p.id]) score += attireChampions[attire][p.id];
+        if (tempModifiers[temp] && tempModifiers[temp][p.id]) score += tempModifiers[temp][p.id];
+
+        if (p.id === lastWornId) score -= 25;
+
+        return { ...p, finalScore: score };
+      });
+
+      ranked.sort((a, b) => b.finalScore - a.finalScore);
+
+      return {
+        primary: ranked[0],
+        secondary: ranked[1]
+      };
+    }
+
+    // 計算伴侶雙人對香配對
+    function calculateCouplePairing(primaryScent) {
+      const couplePool = PERFUMES.filter(p => p.isCoupleShared);
+      let partnerMatch = couplePool.find(p => {
+        if (p.id === primaryScent.id) return false;
+        if (primaryScent.id === 'aesop-rozu-arises') {
+          return p.id === 'byredo-rose-no-mans-land' || p.id === 'byredo-blanche-absolu';
+        }
+        if (primaryScent.id === 'byredo-rose-no-mans-land') {
+          return p.id === 'aesop-rozu-arises' || p.id === 'byredo-mojave-ghost';
+        }
+        if (primaryScent.id === 'byredo-de-los-santos') {
+          return p.id === 'byredo-blanche-absolu';
+        }
+        return true;
+      }) || couplePool[0];
+
+      return partnerMatch;
+    }
+
+    // 渲染推薦卡片
+    function updateRecommendation() {
+      const container = document.getElementById('recommendation-container');
+      const hasSelection = state.selected.temp || state.selected.mood || state.selected.occasion || state.selected.attire;
+
+      if (!hasSelection && state.mode !== 'random') {
+        container.innerHTML = `
+          <div class="border border-sandstone/80 border-dashed bg-white/50 rounded-2xl p-8 sm:p-12 text-center space-y-4 card-update-pulse">
+            <span class="text-2xl block text-amberwood">◈</span>
+            <div class="space-y-1.5">
+              <h3 class="text-base font-semibold serif-title text-charcoal">今日的嗅覺空白頁</h3>
+              <p class="text-xs text-slatewarm max-w-sm mx-auto leading-relaxed">
+                請在上方點選妳今天的<strong>身心狀態、生活場合、氣溫或衣著</strong>，管家將即刻計算並生成今日命定香氛。
+              </p>
+            </div>
+            <div class="pt-2 flex justify-center gap-2">
+              <button onclick="handleModeSwitch('random')" class="px-4 py-2 rounded-full border border-sandstone bg-white/80 hover:bg-sand text-xs tracking-wider text-charcoal transition-all shadow-sm">
+                🎲 或直接交給隨機盲盒
+              </button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const { primary, secondary } = calculateBestScent();
+
+      const getCatBadge = (level) => {
+        if (level === 'high') {
+          return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-red-50 text-dangerred border border-red-200">
+            <span>🔴 貓咪高危防護</span>
+          </span>`;
+        } else if (level === 'medium') {
+          return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-50 text-cautionyellow border border-amber-200">
+            <span>🟡 貓咪中度警戒</span>
+          </span>`;
+        } else {
+          return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-50 text-sagegreen border border-emerald-200">
+            <span>🟢 貓咪溫和低敏</span>
+          </span>`;
+        }
+      };
+
+      const getCatSopNotice = (level, hazard) => {
+        if (level === 'high') {
+          return `<div class="p-3.5 bg-red-50/70 border border-red-200/80 rounded-xl text-xs text-dangerred space-y-1">
+            <div class="font-medium flex items-center gap-1.5">
+              <span>🐱 玄關著香守則 (含 ${hazard})</span>
+            </div>
+            <p class="text-[11px] leading-relaxed text-dangerred/90">
+              本款含有貓咪肝臟無法代謝的天然植物精油分子。<strong>嚴禁在同處室內噴灑</strong>，請移步至出門玄關通風處。著香後 30 分鐘內或返家更換外衣前，避免貓咪直接磨蹭或舔舐噴香部位。
+            </p>
+          </div>`;
+        } else if (level === 'medium') {
+          return `<div class="p-3 bg-amber-50/70 border border-amber-200/70 rounded-xl text-xs text-cautionyellow space-y-1">
+            <div class="font-medium flex items-center gap-1.5">
+              <span>🐱 著香提醒 (含 ${hazard})</span>
+            </div>
+            <p class="text-[11px] leading-relaxed text-cautionyellow/90">
+              天然草本及木質萃取物代謝較慢，建議噴灑於外著衣物，避免讓貓咪直接舔舐噴香處肌膚。
+            </p>
+          </div>`;
+        } else {
+          return `<div class="p-3 bg-emerald-50/60 border border-emerald-200/60 rounded-xl text-xs text-sagegreen flex items-center justify-between">
+            <span class="text-[11px]">🐱 本款以安全合成體香與白麝香為主，對貓咪嗅覺負擔低，但仍需避免直接舔舐。</span>
+          </div>`;
+        }
+      };
+
+      const getLayeringSection = (scent) => {
+        if (!scent.canLayer) {
+          return `<div class="p-4 rounded-xl bg-charcoal text-linen space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs uppercase tracking-wider text-amberwood font-display">Stand-Alone Protocol</span>
+              <span class="text-[11px] px-2 py-0.5 rounded bg-white/10 text-sandstone">嚴禁疊香 ‧ 獨立單穿</span>
+            </div>
+            <h4 class="text-sm font-semibold text-white serif-title">深邃木質獨立結界</h4>
+            <p class="text-xs text-sandstone/90 leading-relaxed">${scent.standAloneReason}</p>
+            <div class="text-[11px] text-amberwood pt-1 border-t border-white/10">
+              <strong>最佳單穿點位：</strong>著裝後，於後頸髮際 1 下 ＋ 兩手手腕內側輕壓 1 下（切忌摩擦），維持其純粹的肅穆深邃。
+            </div>
+          </div>`;
+        }
+
+        return `<div class="p-4 rounded-xl border border-sandstone bg-sand/30 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs uppercase tracking-wider text-slatewarm font-display">Layering Formula</span>
+            <span class="text-[11px] px-2 py-0.5 rounded bg-amberwood/10 text-amberwood font-medium">大吉嶺茶打底提案</span>
+          </div>
+          <p class="text-xs text-charcoal leading-relaxed">${scent.layerRecipe}</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-2 border-t border-sandstone/60">
+            <div class="p-2 bg-white/80 rounded-lg">
+              <span class="font-medium text-charcoal block">[步驟 1: 著裝前] 打底</span>
+              <span class="text-slatewarm">大吉嶺茶 2 下噴於胸口貼身內著，以體溫散發水生茶霧。</span>
+            </div>
+            <div class="p-2 bg-white/80 rounded-lg">
+              <span class="font-medium text-charcoal block">[步驟 2: 著裝後] 主角</span>
+              <span class="text-slatewarm">外衣袖口或手腕 1 下輕按，嚴禁搓揉破壞分子結構。</span>
+            </div>
+          </div>
+        </div>`;
+      };
+
+      // 雙人對香區塊
+      let couplePairingHtml = '';
+      if (state.mode === 'couple') {
+        const partnerScent = calculateCouplePairing(primary);
+        couplePairingHtml = `
+          <div class="mt-6 p-5 rounded-2xl border-2 border-amberwood/70 bg-amberlight/40 space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-amberwood text-sm">✦</span>
+                <h3 class="text-sm font-semibold serif-title text-charcoal">雙人和諧共鳴配對 (Dual Scent Synergy)</h3>
+              </div>
+              <span class="text-[11px] px-2.5 py-0.5 rounded-full bg-amberwood text-white font-medium">同場無衝突</span>
+            </div>
+            <p class="text-xs text-slatewarm leading-relaxed">
+              摒棄刻板框架，純粹以氣質張力與木質線條互補。今天一人穿<strong>《${primary.name}》</strong>，伴侶最契合的對香首選為<strong>《${partnerScent.name}》</strong>：
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div class="p-3.5 bg-white/90 rounded-xl border border-sandstone space-y-1">
+                <span class="text-[10px] uppercase tracking-wider text-slatewarm block">Scent 01 ‧ 今日主選</span>
+                <div class="text-xs font-semibold text-charcoal">${primary.name} (${primary.enName})</div>
+                <div class="text-[11px] text-slatewarm">${primary.notes}</div>
+              </div>
+              <div class="p-3.5 bg-white/90 rounded-xl border border-sandstone space-y-1">
+                <span class="text-[10px] uppercase tracking-wider text-amberwood block">Scent 02 ‧ 伴侶呼應</span>
+                <div class="text-xs font-semibold text-charcoal">${partnerScent.name} (${partnerScent.enName})</div>
+                <div class="text-[11px] text-slatewarm">${partnerScent.notes}</div>
+              </div>
+            </div>
+            <div class="text-xs text-charcoal/90 bg-white/60 p-3 rounded-lg border border-sandstone/70">
+              <strong>氣息共鳴點：</strong>${getPairingDescription(primary, partnerScent)}
+            </div>
+          </div>
+        `;
+      }
+
+      let badgeTitle = 'Optimal Curation | 今日命定香氛';
+      if (state.mode === 'random') badgeTitle = 'Blind Box Surprise | 盲盒靈感偶遇';
+      else if (state.mode === 'couple') badgeTitle = 'Dual Synergy | 雙人共鳴主香';
+
+      container.innerHTML = `
+        <div class="border border-sandstone bg-white rounded-2xl p-6 sm:p-8 shadow-sm card-update-pulse space-y-6">
+          
+          <!-- 頂部標題區 -->
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-sandstone/70 pb-4">
+            <div class="space-y-1">
+              <span class="text-xs uppercase tracking-[0.25em] font-display text-amberwood">
+                ${badgeTitle}
+              </span>
+              <h2 class="text-2xl sm:text-3xl font-semibold serif-title text-charcoal">${primary.name}</h2>
+              <span class="text-xs text-slatewarm tracking-wider">${primary.enName} ‧ ${primary.brand}</span>
+            </div>
+            <div class="flex flex-col items-end gap-1.5">
+              ${getCatBadge(primary.catSafety)}
+              <span class="text-[11px] px-2.5 py-0.5 rounded-full bg-sandstone/50 text-charcoal">${primary.category}</span>
+            </div>
+          </div>
+
+          <!-- 調香特質 -->
+          <div class="space-y-3">
+            <div class="text-xs text-slatewarm flex items-center gap-2">
+              <span class="font-medium text-charcoal">核心香調：</span>
+              <span>${primary.notes}</span>
+            </div>
+            <p class="text-sm text-charcoal leading-relaxed serif-title">${primary.desc}</p>
+          </div>
+
+          <!-- 貓咪防護 SOP -->
+          ${getCatSopNotice(primary.catSafety, primary.catHazard)}
+
+          <!-- 疊香或單穿指引 -->
+          ${getLayeringSection(primary)}
+
+          <!-- 雙人對香模式展示 -->
+          ${couplePairingHtml}
+
+          <!-- 底部著香打卡與備選 -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-sandstone">
+            <div class="text-xs text-slatewarm">
+              <span>備選靈感：</span>
+              <button onclick="switchToScent('${secondary.id}')" class="text-charcoal font-medium hover:text-amberwood underline ml-1">
+                ${secondary.name} (${secondary.category})
+              </button>
+            </div>
+            <button onclick="logCurrentScent('${primary.id}')" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-charcoal text-white hover:bg-deepcharcoal transition-colors text-xs font-medium">
+              <span>✓ 記錄今日著香</span>
+            </button>
+          </div>
+
+        </div>
+      `;
+    }
+
+    function getPairingDescription(s1, s2) {
+      if ((s1.id.includes('rozu') && s2.id.includes('no-mans-land')) || (s2.id.includes('rozu') && s1.id.includes('no-mans-land'))) {
+        return '【深沉與清冽的玫瑰雙璧】一人散發深邃癒創木與紫蘇冷感，另一人散發粉紅胡椒與乾淨紙莎草。兩股不同維度的玫瑰交錯，自律挺拔、氣場和諧。';
+      }
+      if (s1.id.includes('rozu') && s2.id.includes('blanche') || s2.id.includes('rozu') && s1.id.includes('blanche')) {
+        return '【冷冽古木與日曬亞麻】帶刺荊棘玫瑰與純白日曬織物形成「一剛一柔、一深一淨」的立體對比，走在一起清新耐聞。';
+      }
+      return `【${s1.category}】與【${s2.category}】在空間中共存，線條俐落不互斥，展現出極致純粹的私藏美學。`;
+    }
+
+    function switchToScent(scentId) {
+      const scent = PERFUMES.find(p => p.id === scentId);
+      if (!scent) return;
+
+      if (scent.tags.includes('cold')) state.selected.temp = 'cold';
+      else if (scent.tags.includes('hot')) state.selected.temp = 'hot';
+      else if (scent.tags.includes('warm')) state.selected.temp = 'warm';
+      else state.selected.temp = 'mild';
+
+      if (scent.tags.includes('sharp')) state.selected.mood = 'sharp';
+      else if (scent.tags.includes('weary')) state.selected.mood = 'weary';
+      else if (scent.tags.includes('refresh')) state.selected.mood = 'refresh';
+      else if (scent.tags.includes('deep')) state.selected.mood = 'deep';
+      else state.selected.mood = 'zero';
+
+      if (scent.tags.includes('meeting')) state.selected.occasion = 'meeting';
+      else if (scent.tags.includes('outdoor')) state.selected.occasion = 'outdoor';
+      else if (scent.tags.includes('art')) state.selected.occasion = 'art';
+      else if (scent.tags.includes('date')) state.selected.occasion = 'date';
+      else state.selected.occasion = 'work';
+
+      if (scent.tags.includes('suit')) state.selected.attire = 'suit';
+      else if (scent.tags.includes('shirt')) state.selected.attire = 'shirt';
+      else if (scent.tags.includes('knit')) state.selected.attire = 'knit';
+      else state.selected.attire = 'casual';
+
+      renderOptionChips();
+      updateRecommendation();
+      document.getElementById('recommendation-container').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function logCurrentScent(scentId) {
+      const scent = PERFUMES.find(p => p.id === scentId);
+      if (!scent) return;
+
+      const newLog = {
+        id: scent.id,
+        name: scent.name,
+        brand: scent.brand,
+        timestamp: new Date().toLocaleDateString('zh-TW', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        tempDesc: OPTIONS_CONFIG.temp.find(t => t.id === state.selected.temp)?.label,
+        moodDesc: OPTIONS_CONFIG.mood.find(m => m.id === state.selected.mood)?.label
+      };
+
+      state.logs.unshift(newLog);
+      if (state.logs.length > 30) state.logs.pop();
+      localStorage.setItem('scent_wardrobe_logs', JSON.stringify(state.logs));
+      updateLogBadge();
+      alert(`已記錄：${scent.name}（${newLog.timestamp}）`);
+    }
+
+    function updateLogBadge() {
+      document.getElementById('log-count-badge').textContent = state.logs.length;
+    }
+
+    function toggleLogModal(show) {
+      const modal = document.getElementById('log-modal');
+      const list = document.getElementById('log-list');
+      if (show) {
+        modal.classList.remove('hidden');
+        if (state.logs.length === 0) {
+          list.innerHTML = `<div class="text-center py-8 text-slatewarm">尚無著香歷史紀錄</div>`;
+        } else {
+          list.innerHTML = state.logs.map(log => `
+            <div class="p-3 bg-white rounded-xl border border-sandstone flex items-center justify-between">
+              <div>
+                <div class="font-medium text-charcoal">${log.name} <span class="text-[10px] text-slatewarm font-normal">(${log.brand})</span></div>
+                <div class="text-[10px] text-slatewarm">${log.tempDesc} ‧ ${log.moodDesc}</div>
+              </div>
+              <span class="text-[10px] text-slatewarm">${log.timestamp}</span>
+            </div>
+          `).join('');
+        }
+      } else {
+        modal.classList.add('hidden');
+      }
+    }
+
+    function clearScentLogs() {
+      if (confirm('確定要清空所有著香紀錄嗎？')) {
+        state.logs = [];
+        localStorage.removeItem('scent_wardrobe_logs');
+        updateLogBadge();
+        toggleLogModal(true);
+      }
+    }
+
+    function renderBrandFilters() {
+      const brands = ['all', 'Aesop', 'Byredo', 'Diptyque', 'Perfumer H', 'Bvlgari', 'Tom Ford', 'L:a Bruket'];
+      const container = document.getElementById('brand-filters');
+      container.innerHTML = brands.map(b => `
+        <button onclick="setBrandFilter('${b}')" class="px-2.5 py-1 rounded-full border transition-colors ${
+          state.activeBrandFilter === b 
+            ? 'bg-charcoal text-white border-charcoal' 
+            : 'border-sandstone bg-white/60 text-slatewarm hover:text-charcoal'
+        }">
+          ${b === 'all' ? '全部' : b}
+        </button>
+      `).join('');
+    }
+
+    function setBrandFilter(brand) {
+      state.activeBrandFilter = brand;
+      renderBrandFilters();
+      renderCompendium();
+    }
+
+    function renderCompendium() {
+      const grid = document.getElementById('perfume-grid');
+      const filtered = state.activeBrandFilter === 'all' 
+        ? PERFUMES 
+        : PERFUMES.filter(p => p.brand.toLowerCase() === state.activeBrandFilter.toLowerCase());
+
+      grid.innerHTML = filtered.map(p => `
+        <div class="border border-sandstone bg-white/80 rounded-xl p-4 flex flex-col justify-between space-y-3 hover:border-slatewarm/60 transition-all">
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] uppercase tracking-wider text-slatewarm font-display">${p.brand}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full ${
+                p.catSafety === 'high' ? 'bg-red-50 text-dangerred' : (p.catSafety === 'medium' ? 'bg-amber-50 text-cautionyellow' : 'bg-emerald-50 text-sagegreen')
+              }">
+                ${p.catSafety === 'high' ? '🔴 貓咪高危' : (p.catSafety === 'medium' ? '🟡 中度警戒' : '🟢 低敏溫和')}
+              </span>
+            </div>
+            <h4 class="text-sm font-semibold serif-title text-charcoal">${p.name}</h4>
+            <div class="text-[11px] text-slatewarm">${p.category}</div>
+            <div class="text-[10px] text-charcoal/80 pt-1 border-t border-sandstone/60">${p.notes}</div>
+          </div>
+          <div class="pt-2 flex items-center justify-between border-t border-sandstone/60">
+            <span class="text-[10px] text-slatewarm">${p.isCoupleShared ? '✦ 伴侶共鳴款' : '獨立典藏'}</span>
+            <button onclick="switchToScent('${p.id}')" class="text-xs text-charcoal hover:text-amberwood font-medium underline">
+              試穿此款
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>
